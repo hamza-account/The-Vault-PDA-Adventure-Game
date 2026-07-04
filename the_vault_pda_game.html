@@ -1,0 +1,390 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --vault-bg:#0a0c0f;
+    --vault-panel:#111418;
+    --vault-border:#1e2530;
+    --vault-green:#00ff88;
+    --vault-red:#ff3355;
+    --vault-amber:#ffaa00;
+    --vault-blue:#00aaff;
+    --vault-dim:#2a3040;
+    --vault-text:#c8d8e8;
+    --vault-muted:#4a5a6a;
+    --font-mono:'Share Tech Mono',monospace;
+    --font-ui:'Rajdhani',sans-serif;
+  }
+  #vg{font-family:var(--font-mono);background:var(--vault-bg);color:var(--vault-text);min-height:560px;padding:0;border-radius:12px;overflow:hidden;position:relative}
+  .scanline{position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:100}
+  #header{background:var(--vault-panel);border-bottom:1px solid var(--vault-border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+  #header .logo{font-family:var(--font-ui);font-size:18px;font-weight:600;letter-spacing:3px;color:var(--vault-green);text-transform:uppercase}
+  #header .status-bar{display:flex;gap:16px;font-size:11px;color:var(--vault-muted)}
+  #header .status-bar span{display:flex;align-items:center;gap:4px}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--vault-green)}
+  .dot.red{background:var(--vault-red)}
+  .dot.amber{background:var(--vault-amber)}
+  #main{display:grid;grid-template-columns:1fr 240px;height:calc(100% - 48px)}
+  #scene{padding:20px;display:flex;flex-direction:column;gap:14px}
+  #room-header{display:flex;align-items:center;gap:10px}
+  #room-icon{font-size:28px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--vault-panel);border:1px solid var(--vault-border);border-radius:8px}
+  #room-name{font-family:var(--font-ui);font-size:20px;font-weight:600;color:var(--vault-green);letter-spacing:2px;text-transform:uppercase}
+  #room-sub{font-size:11px;color:var(--vault-muted);letter-spacing:1px;margin-top:2px}
+  #narrative{background:var(--vault-panel);border:1px solid var(--vault-border);border-radius:8px;padding:14px;font-size:12.5px;line-height:1.8;color:var(--vault-text);min-height:90px}
+  #log{background:var(--vault-panel);border:1px solid var(--vault-border);border-radius:8px;padding:10px 14px;font-size:11.5px;line-height:1.9;color:var(--vault-muted);max-height:110px;overflow-y:auto;flex-shrink:0}
+  #log .entry{color:var(--vault-muted)}
+  #log .entry.ok{color:var(--vault-green)}
+  #log .entry.err{color:var(--vault-red)}
+  #log .entry.warn{color:var(--vault-amber)}
+  #actions{display:flex;flex-wrap:wrap;gap:8px}
+  .act-btn{background:transparent;border:1px solid var(--vault-dim);color:var(--vault-text);font-family:var(--font-mono);font-size:11.5px;padding:6px 12px;border-radius:5px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:6px;letter-spacing:0.5px}
+  .act-btn:hover{border-color:var(--vault-green);color:var(--vault-green);background:rgba(0,255,136,0.05)}
+  .act-btn:active{transform:scale(0.97)}
+  .act-btn.danger:hover{border-color:var(--vault-red);color:var(--vault-red);background:rgba(255,51,85,0.05)}
+  #sidebar{background:var(--vault-panel);border-left:1px solid var(--vault-border);padding:16px;display:flex;flex-direction:column;gap:16px}
+  .sb-section{display:flex;flex-direction:column;gap:8px}
+  .sb-label{font-size:10px;letter-spacing:2px;color:var(--vault-muted);text-transform:uppercase;margin-bottom:4px;font-family:var(--font-ui)}
+  #inventory{display:flex;flex-direction:column;gap:4px;min-height:60px}
+  .inv-item{background:var(--vault-dim);border-radius:4px;padding:4px 8px;font-size:11px;color:var(--vault-text);display:flex;align-items:center;gap:6px}
+  #pda-display{background:var(--vault-bg);border:1px solid var(--vault-border);border-radius:8px;padding:10px;font-size:10.5px}
+  .pda-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid var(--vault-border)}
+  .pda-row:last-child{border-bottom:none}
+  .pda-key{color:var(--vault-muted);font-size:10px;letter-spacing:1px}
+  .pda-val{color:var(--vault-green);text-align:right;max-width:120px;word-break:break-all;font-size:10px}
+  #stack-vis{display:flex;flex-direction:column;gap:2px;min-height:40px}
+  .stack-frame{background:var(--vault-dim);border-radius:3px;padding:3px 8px;font-size:10px;color:var(--vault-amber);text-align:center;letter-spacing:1px}
+  .stack-frame.bottom{background:rgba(0,170,255,0.1);color:var(--vault-blue)}
+  #alarm-bar{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--vault-bg);border:1px solid var(--vault-border);border-radius:6px}
+  .alarm-label{font-size:10px;color:var(--vault-muted);letter-spacing:1px;font-family:var(--font-ui)}
+  .alarm-pips{display:flex;gap:3px}
+  .pip{width:14px;height:8px;border-radius:2px;background:var(--vault-dim)}
+  .pip.lit{background:var(--vault-amber)}
+  .pip.lit.red{background:var(--vault-red)}
+  #end-screen{display:none;position:absolute;inset:0;background:rgba(10,12,15,0.97);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:20px;border-radius:12px}
+  #end-screen.show{display:flex}
+  #end-title{font-family:var(--font-ui);font-size:36px;font-weight:600;letter-spacing:6px;text-transform:uppercase}
+  #end-title.win{color:var(--vault-green)}
+  #end-title.lose{color:var(--vault-red)}
+  #end-msg{font-size:12px;color:var(--vault-muted);text-align:center;max-width:320px;line-height:1.8}
+  #end-trace{background:var(--vault-panel);border:1px solid var(--vault-border);border-radius:8px;padding:14px;font-size:11px;color:var(--vault-text);max-width:380px;line-height:1.9}
+  .trace-item{display:flex;gap:10px;align-items:flex-start}
+  .trace-sym{color:var(--vault-amber);min-width:60px}
+  .trace-op{color:var(--vault-muted)}
+  #restart-btn{background:transparent;border:1px solid var(--vault-dim);color:var(--vault-text);font-family:var(--font-mono);font-size:12px;padding:8px 24px;border-radius:6px;cursor:pointer;letter-spacing:1px}
+  #restart-btn:hover{border-color:var(--vault-green);color:var(--vault-green)}
+  .no-items{font-size:10.5px;color:var(--vault-muted);font-style:italic;padding:4px 0}
+</style>
+
+<div id="vg">
+  <div class="scanline"></div>
+  <div id="header">
+    <div class="logo">🔐 The Vault</div>
+    <div class="status-bar">
+      <span><div class="dot" id="state-dot"></div> <span id="state-label">ACTIVE</span></span>
+      <span>PDA v2.1</span>
+    </div>
+  </div>
+  <div id="main">
+    <div id="scene">
+      <div id="room-header">
+        <div id="room-icon">🚪</div>
+        <div>
+          <div id="room-name">—</div>
+          <div id="room-sub">STATE: <span id="cur-state">—</span></div>
+        </div>
+      </div>
+      <div id="narrative"></div>
+      <div id="actions"></div>
+      <div id="log"><div class="entry warn">&gt; System boot... PDA initialized.</div></div>
+    </div>
+    <div id="sidebar">
+      <div class="sb-section">
+        <div class="sb-label">Inventory / Stack</div>
+        <div id="stack-vis"></div>
+        <div id="inventory"></div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-label">PDA State</div>
+        <div id="pda-display">
+          <div class="pda-row"><span class="pda-key">STATE</span><span class="pda-val" id="pda-state">—</span></div>
+          <div class="pda-row"><span class="pda-key">INPUT</span><span class="pda-val" id="pda-input">—</span></div>
+          <div class="pda-row"><span class="pda-key">STACK TOP</span><span class="pda-val" id="pda-stack">⊥</span></div>
+          <div class="pda-row"><span class="pda-key">RESULT</span><span class="pda-val" id="pda-result">—</span></div>
+        </div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-label">Alarm Level</div>
+        <div id="alarm-bar">
+          <div class="alarm-pips" id="pips"></div>
+          <div class="alarm-label" id="alarm-text">SECURE</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="end-screen">
+    <div id="end-title"></div>
+    <div id="end-msg"></div>
+    <div id="end-trace"></div>
+    <button id="restart-btn" onclick="initGame()">↩ RESTART</button>
+  </div>
+</div>
+
+<script>
+const BOTTOM = '⊥';
+
+const ROOMS = {
+  ENTRY: {
+    name:'Entry Hall',icon:'🚪',sub:'Security Checkpoint',
+    desc:'You slip through a side door into the dimly lit entry hall. A keycard reader blinks red on the wall. A security guard patrols the far end — you have maybe 90 seconds.',
+    actions:[
+      {label:'🔍 Search desk',id:'SEARCH_DESK'},
+      {label:'📦 Check supply closet',id:'CHECK_CLOSET'},
+      {label:'🚨 Trigger alarm (test)',id:'TRIGGER_ALARM',danger:true}
+    ]
+  },
+  CORRIDOR: {
+    name:'Corridor B',icon:'🛤️',sub:'Access Control Zone',
+    desc:'A long corridor lined with cameras — most are disabled from a power fluctuation. The vault door is at the far end. A locked terminal sits on a pedestal.',
+    actions:[
+      {label:'💳 Swipe keycard',id:'SWIPE_CARD'},
+      {label:'💻 Hack terminal',id:'HACK_TERMINAL'},
+      {label:'👁️ Disable camera',id:'DISABLE_CAMERA'}
+    ]
+  },
+  SERVER: {
+    name:'Server Room',icon:'🖥️',sub:'Restricted Zone',
+    desc:'Rows of humming servers surround you. Somewhere in here is the vault override code. The room smells of ozone and hot metal.',
+    actions:[
+      {label:'🔎 Search servers',id:'SEARCH_SERVERS'},
+      {label:'📋 Copy access code',id:'COPY_CODE'},
+      {label:'💾 Download schematics',id:'DOWNLOAD_SCHEMA'}
+    ]
+  },
+  VAULT_DOOR: {
+    name:'Vault Door',icon:'🔒',sub:'Final Objective',
+    desc:'The vault door looms before you — three feet of reinforced steel. A biometric panel and a keypad wait for input. This is it.',
+    actions:[
+      {label:'🔑 Use vault key',id:'USE_KEY'},
+      {label:'🔢 Enter override code',id:'ENTER_CODE'},
+      {label:'👁️ Use retinal bypass',id:'USE_RETINAL'}
+    ]
+  },
+  ESCAPED:{name:'Escaped',icon:'🏃',sub:''},
+  CAUGHT:{name:'Caught',icon:'🚔',sub:''}
+};
+
+const TRANSITIONS = {
+  ENTRY:{
+    SEARCH_DESK:{
+      req:[],push:'KEYCARD',nextRoom:'ENTRY',
+      msg:'You find a keycard taped under the desk drawer. Score.',
+      log:'Found KEYCARD → pushed to stack',type:'ok'
+    },
+    CHECK_CLOSET:{
+      req:[],push:'VAULT_KEY',nextRoom:'CORRIDOR',
+      msg:'Behind a shelf of cleaning supplies, a key ring hangs on a nail. One of them has a vault symbol.',
+      log:'Found VAULT_KEY → pushed to stack, moving to Corridor',type:'ok'
+    },
+    TRIGGER_ALARM:{
+      req:[],push:null,nextRoom:'CAUGHT',alarm:3,
+      msg:'',log:'Input TRIGGER_ALARM → Reject transition → CAUGHT',type:'err'
+    }
+  },
+  CORRIDOR:{
+    SWIPE_CARD:{
+      req:['KEYCARD'],pop:'KEYCARD',push:'ACCESS_GRANTED',nextRoom:'SERVER',
+      msg:'The reader beeps green. The door clicks open. You stride into the server room.',
+      log:'KEYCARD popped → ACCESS_GRANTED pushed → move to Server Room',type:'ok'
+    },
+    HACK_TERMINAL:{
+      req:[],push:'PARTIAL_CODE',nextRoom:'CORRIDOR',alarm:1,
+      msg:'You break into the terminal but trip a silent tripwire. Partial code extracted — but they know someone\'s here.',
+      log:'PARTIAL_CODE pushed → alarm+1',type:'warn'
+    },
+    DISABLE_CAMERA:{
+      req:[],push:null,nextRoom:'CORRIDOR',
+      msg:'You cut the last camera feed. The corridor is dark and blind.',
+      log:'Camera disabled → no stack change',type:'ok'
+    }
+  },
+  SERVER:{
+    SEARCH_SERVERS:{
+      req:[],push:'SERVER_DATA',nextRoom:'SERVER',
+      msg:'Digging through file directories, you find a hidden partition with vault access logs.',
+      log:'SERVER_DATA pushed',type:'ok'
+    },
+    COPY_CODE:{
+      req:['SERVER_DATA'],pop:'SERVER_DATA',push:'OVERRIDE_CODE',nextRoom:'VAULT_DOOR',
+      msg:'You compile the data into a full override code and burn it to your drive. Time to move.',
+      log:'SERVER_DATA popped → OVERRIDE_CODE pushed → move to Vault Door',type:'ok'
+    },
+    DOWNLOAD_SCHEMA:{
+      req:[],push:'SCHEMATICS',nextRoom:'SERVER',alarm:1,
+      msg:'The download takes longer than expected. A log alert fires somewhere.',
+      log:'SCHEMATICS pushed → alarm+1',type:'warn'
+    }
+  },
+  VAULT_DOOR:{
+    USE_KEY:{
+      req:['VAULT_KEY'],pop:'VAULT_KEY',push:'LOCK_OPEN',nextRoom:'VAULT_DOOR',
+      msg:'The physical lock turns with a satisfying thunk. One layer down.',
+      log:'VAULT_KEY popped → LOCK_OPEN pushed',type:'ok'
+    },
+    ENTER_CODE:{
+      req:['OVERRIDE_CODE','LOCK_OPEN'],pop2:['OVERRIDE_CODE','LOCK_OPEN'],push:null,nextRoom:'ESCAPED',
+      msg:'',log:'OVERRIDE_CODE+LOCK_OPEN popped → stack clear → ACCEPT → ESCAPED',type:'ok'
+    },
+    USE_RETINAL:{
+      req:[],push:null,nextRoom:'CAUGHT',alarm:3,
+      msg:'',log:'Retinal mismatch → security lockdown → CAUGHT',type:'err'
+    }
+  }
+};
+
+let state={};
+let traceLog=[];
+
+function initGame(){
+  state={
+    room:'ENTRY',
+    pdaState:'q0',
+    stack:[BOTTOM],
+    inventory:[],
+    alarm:0,
+    inputLog:[],
+    moves:0
+  };
+  traceLog=[];
+  document.getElementById('end-screen').classList.remove('show');
+  document.getElementById('state-dot').className='dot';
+  document.getElementById('state-label').textContent='ACTIVE';
+  render();
+  addLog('&gt; New run started. Stack initialized with ⊥.','warn');
+}
+
+function render(){
+  const r=ROOMS[state.room];
+  document.getElementById('room-icon').textContent=r.icon;
+  document.getElementById('room-name').textContent=r.name;
+  document.getElementById('cur-state').textContent=state.pdaState;
+  document.getElementById('room-sub').innerHTML='STATE: <span id="cur-state">'+state.pdaState+'</span>';
+  document.getElementById('narrative').textContent=r.desc||'';
+  document.getElementById('pda-state').textContent=state.pdaState;
+  document.getElementById('pda-input').textContent=state.inputLog.slice(-1)[0]||'—';
+  document.getElementById('pda-stack').textContent=state.stack[state.stack.length-1]||BOTTOM;
+  document.getElementById('pda-result').textContent=state.room==='ESCAPED'?'ACCEPT':state.room==='CAUGHT'?'REJECT':'IN PROGRESS';
+
+  const inv=document.getElementById('inventory');
+  if(state.inventory.length===0){inv.innerHTML='<div class="no-items">Empty</div>';}
+  else{inv.innerHTML=state.inventory.map(i=>`<div class="inv-item">📦 ${i}</div>`).join('');}
+
+  const sv=document.getElementById('stack-vis');
+  const stackDisplay=[...state.stack].reverse();
+  sv.innerHTML=stackDisplay.map((s,i)=>`<div class="stack-frame${s===BOTTOM?' bottom':''}">${s}</div>`).join('');
+
+  const pips=document.getElementById('pips');
+  let pipsHTML='';
+  for(let i=0;i<5;i++){
+    let cls='pip';
+    if(i<state.alarm){cls+=' lit';if(state.alarm>=4)cls+=' red';}
+    pipsHTML+=`<div class="${cls}"></div>`;
+  }
+  pips.innerHTML=pipsHTML;
+  const alarmTexts=['SECURE','ELEVATED','CAUTION','CRITICAL','LOCKDOWN'];
+  document.getElementById('alarm-text').textContent=alarmTexts[Math.min(state.alarm,4)];
+
+  const acts=document.getElementById('actions');
+  const roomData=ROOMS[state.room];
+  if(roomData.actions){
+    acts.innerHTML=roomData.actions.map(a=>`<button class="act-btn${a.danger?' danger':''}" onclick="doAction('${a.id}')">${a.label}</button>`).join('');
+  } else {acts.innerHTML='';}
+}
+
+function addLog(msg,type=''){
+  const log=document.getElementById('log');
+  const d=document.createElement('div');
+  d.className='entry'+(type?' '+type:'');
+  d.innerHTML=msg;
+  log.appendChild(d);
+  log.scrollTop=log.scrollHeight;
+}
+
+function doAction(id){
+  const room=state.room;
+  const trans=TRANSITIONS[room];
+  if(!trans||!trans[id])return;
+  const t=trans[id];
+  state.moves++;
+  state.inputLog.push(id);
+
+  const reqMet=t.req.every(r=>state.inventory.includes(r));
+  if(!reqMet){
+    addLog(`&gt; [REJECT] Missing required item: ${t.req.filter(r=>!state.inventory.includes(r)).join(', ')}. Transition blocked.`,'err');
+    traceLog.push({sym:id,op:'REJECT — missing: '+t.req.filter(r=>!state.inventory.includes(r)).join(', ')});
+    state.alarm=Math.min(state.alarm+1,5);
+    if(state.alarm>=5){endGame(false,'Security detected repeated failures. Lockdown initiated.');return;}
+    render();
+    return;
+  }
+
+  addLog(`&gt; [${t.type.toUpperCase()}] ${t.log}`,t.type);
+  traceLog.push({sym:id,op:t.log});
+
+  if(t.pop&&state.inventory.includes(t.pop)){
+    state.inventory=state.inventory.filter(i=>i!==t.pop);
+    state.stack=state.stack.filter(s=>s!==t.pop);
+  }
+  if(t.pop2){
+    t.pop2.forEach(p=>{
+      state.inventory=state.inventory.filter(i=>i!==p);
+      state.stack=state.stack.filter(s=>s!==p);
+    });
+  }
+  if(t.push){
+    state.inventory.push(t.push);
+    state.stack.push(t.push);
+  }
+  if(t.alarm){state.alarm=Math.min(state.alarm+t.alarm,5);}
+
+  const pdaMap={ENTRY:'q0',CORRIDOR:'q1',SERVER:'q2',VAULT_DOOR:'q3',ESCAPED:'qf',CAUGHT:'qd'};
+  state.room=t.nextRoom;
+  state.pdaState=pdaMap[t.nextRoom]||state.pdaState;
+
+  if(state.alarm>=5){endGame(false,'Alarm threshold exceeded. Security overwhelmed you.');return;}
+  if(state.room==='CAUGHT'){endGame(false,t.msg||'Security caught you. Better luck next time.');return;}
+  if(state.room==='ESCAPED'){endGame(true,'You cleared the vault. Clean run.');return;}
+
+  render();
+}
+
+function endGame(win,msg){
+  render();
+  const es=document.getElementById('end-screen');
+  const et=document.getElementById('end-title');
+  const em=document.getElementById('end-msg');
+  const etr=document.getElementById('end-trace');
+  et.textContent=win?'ESCAPED':'CAUGHT';
+  et.className=win?'win':'lose';
+  em.textContent=msg+` (${state.moves} moves)`;
+
+  const dot=document.getElementById('state-dot');
+  const sl=document.getElementById('state-label');
+  dot.className='dot'+(win?'':' red');
+  sl.textContent=win?'ACCEPTED':'REJECTED';
+
+  etr.innerHTML='<div style="color:var(--vault-muted);font-size:10px;letter-spacing:1px;margin-bottom:8px;font-family:var(--font-ui)">PDA TRACE LOG</div>'+
+    traceLog.map(t=>`<div class="trace-item"><span class="trace-sym">${t.sym}</span><span class="trace-op">${t.op}</span></div>`).join('');
+
+  es.classList.add('show');
+}
+
+function buildPips(){
+  const pips=document.getElementById('pips');
+  pips.innerHTML='';
+  for(let i=0;i<5;i++){const d=document.createElement('div');d.className='pip';pips.appendChild(d);}
+}
+
+buildPips();
+initGame();
+</script>
